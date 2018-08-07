@@ -19,10 +19,10 @@
         ]
     },
     "stages": {
-        "development": {
-            "proxy": {
-                "command": "gin --port $PORT"
-            }
-        }
+    "development": {
+      "proxy": {
+        "command": "gin --port $PORT"
+      }
     }
+  }
 }
