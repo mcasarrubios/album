@@ -1,0 +1,28 @@
+{
+    "name": "album-api",
+    "profile": "postrof",
+    "regions": [
+        "eu-west-3"
+    ],
+    "lambda": {
+        "policy": [
+            {
+                "Effect": "Allow",
+                "Resource": "*",
+                "Action": [
+                    "dynamodb:Get*",
+                    "dynamodb:List*",
+                    "dynamodb:PutItem",
+                    "dynamodb:DeleteItem"
+                ]
+            }
+        ]
+    },
+    "stages": {
+        "development": {
+            "proxy": {
+                "command": "gin --port $PORT"
+            }
+        }
+    }
+}
