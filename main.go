@@ -57,16 +57,16 @@ func create(w http.ResponseWriter, r *http.Request) {
 	ph := new(photo)
 	err := decoder.Decode(&ph)
 	if err != nil {
-		serverError(w, err)
+		clientError(w, "Invalid JSON", err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if ph.AlbumID == "" || ph.Date == "" {
-		clientError(w, "Fill required fields", http.StatusBadRequest)
+		clientError(w, "Fill required fields", "Invalid input", http.StatusBadRequest)
 		return
 	}
 
-	err = putItem(ph)
+	err = createItem(ph)
 	if err != nil {
 		serverError(w, err)
 	}
@@ -96,10 +96,12 @@ func sendJSON(w http.ResponseWriter, item interface{}) {
 	w.Write(js)
 }
 
-func clientError(w http.ResponseWriter, errorMsg string, statusError int) {
+func clientError(w http.ResponseWriter, errorMsg string, logMsg string, statusError int) {
+	log.Error(logMsg)
 	http.Error(w, errorMsg, statusError)
 }
 
 func serverError(w http.ResponseWriter, err error) {
-	http.Error(w, err.Error(), http.StatusInternalServerError)
+	log.Error(err.Error())
+	http.Error(w, "Internal server error", http.StatusInternalServerError)
 }

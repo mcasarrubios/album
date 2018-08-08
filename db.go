@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	uuid "github.com/satori/go.uuid"
 )
 
 var db = dynamodb.New(session.New(), aws.NewConfig().WithRegion("eu-west-3"))
@@ -38,6 +39,15 @@ var db = dynamodb.New(session.New(), aws.NewConfig().WithRegion("eu-west-3"))
 
 //     return bk, nil
 // }
+
+func createItem(ph *photo) error {
+	id, err := uuid.NewV4()
+	if err != nil {
+		return err
+	}
+	ph.ID = id.String()
+	return putItem(ph)
+}
 
 // Add a Photo record to DynamoDB.
 func putItem(ph *photo) error {
