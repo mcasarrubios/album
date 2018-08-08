@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -64,6 +65,7 @@ func putItem(ph *photo) error {
 		},
 	}
 
-	_, err := db.PutItem(input)
+	output, err := db.PutItem(input)
+	fmt.Printf("-----> %v", output)
 	return err
 }

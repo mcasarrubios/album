@@ -2,18 +2,19 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/apex/log"
 	apexJSON "github.com/apex/log/handlers/json"
-	"github.com/apex/log/handlers/text"
+	apexText "github.com/apex/log/handlers/text"
 )
 
 // use JSON logging when run by Up (including `up start`).
 func init() {
 	if os.Getenv("UP_STAGE") == "" {
-		log.SetHandler(text.Default)
+		log.SetHandler(apexText.Default)
 	} else {
 		log.SetHandler(apexJSON.Default)
 	}
@@ -51,26 +52,29 @@ func router(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func create(w http.ResponseWriter, r *http.Request) error {
+func create(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	ph := new(photo)
 	err := decoder.Decode(&ph)
 	if err != nil {
-		return serverError(w, err)
+		serverError(w, err)
+		return
 	}
 
 	if ph.AlbumID == "" || ph.Date == "" {
-		return clientError(w, http.StatusBadRequest)
+		clientError(w, "Fill required fields", http.StatusBadRequest)
+		return
 	}
 
 	err = putItem(ph)
 	if err != nil {
-		return serverError(w, err)
+		serverError(w, err)
 	}
+	fmt.Fprintf(w, "created")
+	// sendJSON(w)
 }
 
 func get(w http.ResponseWriter, r *http.Request) {
-
 	ph := &photo{
 		URL:         "https://static.allcloud.com/assets/images/blog/golang.png",
 		Tags:        []string{"tag-1", "tag-2"},
@@ -92,10 +96,10 @@ func sendJSON(w http.ResponseWriter, item interface{}) {
 	w.Write(js)
 }
 
-func clientError(w http.ResponseWriter, statusError int) {
-	return http.Error(w, statusError)
+func clientError(w http.ResponseWriter, errorMsg string, statusError int) {
+	http.Error(w, errorMsg, statusError)
 }
 
 func serverError(w http.ResponseWriter, err error) {
-	return http.Error(w, err.Error(), http.StatusInternalServerError)
+	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
