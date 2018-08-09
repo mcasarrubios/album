@@ -20,15 +20,6 @@ func init() {
 	}
 }
 
-type photo struct {
-	AlbumID     string   `json:"albumId"`
-	ID          string   `json:"id"`
-	URL         string   `json:"url"`
-	Tags        []string `json:"tags"`
-	Description string   `json:"description"`
-	Date        string   `json:"date"`
-}
-
 func main() {
 	addr := ":" + os.Getenv("PORT")
 	http.HandleFunc("/", router)
