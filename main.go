@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/apex/log"
 	apexJSON "github.com/apex/log/handlers/json"
 	apexText "github.com/apex/log/handlers/text"
+	"github.com/mcasarrubios/album/errors"
+	"github.com/mcasarrubios/album/photo"
 )
 
 // use JSON logging when run by Up (including `up start`).
@@ -31,7 +32,7 @@ func main() {
 func router(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		get(w, r)
+		// get(w, r)
 	case http.MethodPost:
 		create(w, r)
 	case http.MethodPut:
@@ -45,36 +46,31 @@ func router(w http.ResponseWriter, r *http.Request) {
 
 func create(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	ph := new(photo)
-	err := decoder.Decode(&ph)
+	body := new(photo.dao.CreateInput)
+	err := decoder.Decode(&body)
 	if err != nil {
-		clientError(w, "Invalid JSON", err.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	if ph.AlbumID == "" || ph.Date == "" {
-		clientError(w, "Fill required fields", "Invalid input", http.StatusBadRequest)
+	ph, err = photo.Create(body)
+	if err != nil {
+		sendError(w, err)
 		return
 	}
-
-	err = createItem(ph)
-	if err != nil {
-		serverError(w, err)
-	}
-	fmt.Fprintf(w, "created")
-	// sendJSON(w)
-}
-
-func get(w http.ResponseWriter, r *http.Request) {
-	ph := &photo{
-		URL:         "https://static.allcloud.com/assets/images/blog/golang.png",
-		Tags:        []string{"tag-1", "tag-2"},
-		Description: "Awesome description",
-		Date:        "2008-09-15T15:53:00+05:00",
-	}
-
 	sendJSON(w, ph)
 }
+
+// func get(w http.ResponseWriter, r *http.Request) {
+// 	ph := &photo{
+// 		URL:         "https://static.allcloud.com/assets/images/blog/golang.png",
+// 		Tags:        []string{"tag-1", "tag-2"},
+// 		Description: "Awesome description",
+// 		Date:        "2008-09-15T15:53:00+05:00",
+// 	}
+
+// 	sendJSON(w, ph)
+// }
 
 func sendJSON(w http.ResponseWriter, item interface{}) {
 	js, err := json.Marshal(item)
@@ -87,12 +83,12 @@ func sendJSON(w http.ResponseWriter, item interface{}) {
 	w.Write(js)
 }
 
-func clientError(w http.ResponseWriter, errorMsg string, logMsg string, statusError int) {
-	log.Error(logMsg)
-	http.Error(w, errorMsg, statusError)
-}
-
-func serverError(w http.ResponseWriter, err error) {
-	log.Error(err.Error())
-	http.Error(w, "Internal server error", http.StatusInternalServerError)
+func sendError(w http.ResponseWriter, err errors.HTTP) {
+	if err.StatusCode == 500 {
+		log.Error(err.Error())
+		errMsg := "Internal server error"
+	} else {
+		errMsg := err.Error()
+	}
+	http.Error(w, errMsg, err.statusCode)
 }

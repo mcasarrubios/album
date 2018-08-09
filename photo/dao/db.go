@@ -1,12 +1,25 @@
 package dao
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-var db = dynamodb.New(session.New(), aws.NewConfig().WithRegion("eu-west-3"))
+type DB interface {
+	PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemInput, error)
+}
+
+func New() (DB, error) {
+	sess, err := session.NewSession(getConfig())
+	if err != nil {
+		return nil, err
+	}
+	return db.New(sess)
+}
 
 // func listItems() ([]photo, error) {
 // 	var queryInput = &dynamodb.QueryInput{
@@ -90,33 +103,33 @@ var db = dynamodb.New(session.New(), aws.NewConfig().WithRegion("eu-west-3"))
 // 	return putItem(ph)
 // }
 
-// // Add a Photo record to DynamoDB.
-// func putItem(ph *photo) error {
-// 	input := &dynamodb.PutItemInput{
-// 		TableName: aws.String("Photo"),
-// 		Item: map[string]*dynamodb.AttributeValue{
-// 			"AlbumID": {
-// 				S: aws.String(ph.AlbumID),
-// 			},
-// 			"ID": {
-// 				S: aws.String(ph.ID),
-// 			},
-// 			"URL": {
-// 				S: aws.String(ph.URL),
-// 			},
-// 			"Tags": {
-// 				S: aws.String(strings.Join(ph.Tags, " ")),
-// 			},
-// 			"Description": {
-// 				S: aws.String(ph.Description),
-// 			},
-// 			"Date": {
-// 				S: aws.String(ph.Date),
-// 			},
-// 		},
-// 	}
+// Add a Photo record to DynamoDB.
+func (db *DynamoDb) putItem(ph *photo) error {
+	input := &dynamodb.PutItemInput{
+		TableName: aws.String("Photo"),
+		Item: map[string]*dynamodb.AttributeValue{
+			"AlbumID": {
+				S: aws.String(ph.AlbumID),
+			},
+			"ID": {
+				S: aws.String(ph.ID),
+			},
+			"URL": {
+				S: aws.String(ph.URL),
+			},
+			"Tags": {
+				S: aws.String(strings.Join(ph.Tags, " ")),
+			},
+			"Description": {
+				S: aws.String(ph.Description),
+			},
+			"Date": {
+				S: aws.String(ph.Date),
+			},
+		},
+	}
 
-// 	output, err := db.PutItem(input)
-// 	fmt.Printf("-----> %v", output)
-// 	return err
-// }
+	output, err := db.PutItem(input)
+	fmt.Printf("-----> %v", output)
+	return err
+}
