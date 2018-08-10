@@ -20,7 +20,8 @@ type HTTPController interface {
 
 // NewController creates a photo controller
 func NewController() (HTTPController, error) {
-	dao, err := DAO.New()
+	db, err := DAO.OpenDB()
+	dao := DAO.New(db)
 	return &control{dao: dao}, err
 }
 

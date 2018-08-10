@@ -1,7 +1,5 @@
 package dao
 
-import "github.com/aws/aws-sdk-go/service/dynamodb"
-
 // CreateInput data to create a photo
 type CreateInput struct {
 	AlbumID     string   `json:"albumId"`
@@ -24,13 +22,13 @@ type Photo struct {
 
 // DAO access to DB
 type DAO struct {
-	db *dynamodb.DynamoDB
+	db DBProvider
 }
 
 // DataAccessor accesor to DB
 type DataAccessor interface {
 	Create(input CreateInput, URL string) (*Photo, error)
 	// Get(input GetInput) (*Photo, error)
-	// List(query QueryInput) ([]Photo, error)
+	List(query QueryInput) ([]Photo, error)
 	// Delete(input CreateInput) (error)
 }

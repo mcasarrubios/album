@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -10,13 +9,23 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+// DBProvider provider to DB
+type DBProvider interface {
+	PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error)
+}
+
 // New Creates a DAO
-func New() (DataAccessor, error) {
+func New(db DBProvider) DataAccessor {
+	return &DAO{db}
+}
+
+// OpenDB
+func OpenDB() (*dynamodb.DynamoDB, error) {
 	sess, err := session.NewSession(getConfig().session)
 	if err != nil {
 		return nil, err
 	}
-	return &DAO{db: dynamodb.New(sess)}, nil
+	return dynamodb.New(sess), nil
 }
 
 // Create a photo
@@ -151,10 +160,6 @@ func (dao *DAO) putItem(ph *Photo) error {
 			},
 		},
 	}
-
-	fmt.Printf("--00---> %v", input.Item)
-
-	output, err := dao.db.PutItem(input)
-	fmt.Printf("-----> %v, %v", output, err)
+	_, err := dao.db.PutItem(input)
 	return err
 }
