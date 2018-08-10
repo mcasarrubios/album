@@ -1,10 +1,10 @@
 package errors
 
 // HTTP contains error and statusCode
-type HTTP struct {
-	error
-	StatusCode int
-}
+// type HTTP struct {
+// 	err        error
+// 	StatusCode int
+// }
 
 // type customError {
 // 	error
@@ -23,7 +23,7 @@ type HTTP struct {
 // 	return
 // }
 
-// func (err customError) Error() string {
+// func (http *HTTP) Error() string {
 // 	return http.err.Error()
 // }
 

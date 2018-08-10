@@ -15,12 +15,5 @@
         "dynamodb:DeleteItem"
       ]
     }]
-  },
-  "stages": {
-    "development": {
-      "proxy": {
-        "command": "gin --port $PORT"
-      }
-    }
   }
 }

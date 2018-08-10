@@ -7,18 +7,41 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	uuid "github.com/satori/go.uuid"
 )
 
-type DB interface {
-	PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemInput, error)
-}
-
-func New() (DB, error) {
-	sess, err := session.NewSession(getConfig())
+// New Creates a DAO
+func New() (DataAccessor, error) {
+	sess, err := session.NewSession(getConfig().session)
 	if err != nil {
 		return nil, err
 	}
-	return db.New(sess)
+	return &DAO{db: dynamodb.New(sess)}, nil
+}
+
+// Create a photo
+func (dao *DAO) Create(input CreateInput, URL string) (*Photo, error) {
+	id, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+	ph := input.photo(id.String(), URL)
+	err = dao.putItem(ph)
+	if err != nil {
+		return nil, err
+	}
+	return ph, nil
+}
+
+func (in CreateInput) photo(id string, URL string) *Photo {
+	p := new(Photo)
+	p.AlbumID = in.AlbumID
+	p.Tags = in.Tags
+	p.Description = in.Description
+	p.Date = in.Date
+	p.ID = id
+	p.URL = URL
+	return p
 }
 
 // func listItems() ([]photo, error) {
@@ -104,7 +127,7 @@ func New() (DB, error) {
 // }
 
 // Add a Photo record to DynamoDB.
-func (db *DynamoDb) putItem(ph *photo) error {
+func (dao *DAO) putItem(ph *Photo) error {
 	input := &dynamodb.PutItemInput{
 		TableName: aws.String("Photo"),
 		Item: map[string]*dynamodb.AttributeValue{
@@ -129,7 +152,9 @@ func (db *DynamoDb) putItem(ph *photo) error {
 		},
 	}
 
-	output, err := db.PutItem(input)
-	fmt.Printf("-----> %v", output)
+	fmt.Printf("--00---> %v", input.Item)
+
+	output, err := dao.db.PutItem(input)
+	fmt.Printf("-----> %v, %v", output, err)
 	return err
 }
