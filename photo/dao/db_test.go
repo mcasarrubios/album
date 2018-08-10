@@ -38,6 +38,10 @@ func (db *MockDB) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput
 	return new(dynamodb.PutItemOutput), nil
 }
 
+func (db *MockDB) QueryInput(query *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
+	return new(dynamodb.QueryOutput), nil
+}
+
 func TestCreatePhoto(t *testing.T) {
 	input := CreateInput{
 		AlbumID:     photos[0].AlbumID,
@@ -52,16 +56,11 @@ func TestCreatePhoto(t *testing.T) {
 	test.Equals(t, photos[0], photo)
 }
 
-// func TestListPhoto(t *testing.T) {
-// 	query := QueryInput{
-// 		AlbumID:     "1",
-// 		Tags:        []string{"tag-1", "tag-2"},
-// 		Description: "description",
-// 		Date:        "2008-09-15T15:53:00+05:00",
-// 	}
-// 	photo, err := dao.Get(input, "http://my-photo.jpg")
-// 	test.Ok(t, err)
-// 	expected := input.photo(photo.ID, "http://my-photo.jpg")
-// 	expected.ID = photo.ID
-// 	test.Equals(t, expected, photo)
-// }
+func TestListPhoto(t *testing.T) {
+	query := QueryInput{
+		CreateInput: CreateInput{AlbumID: "1"},
+	}
+	actual, err := dao.List(query)
+	test.Ok(t, err)
+	test.Equals(t, photos, actual)
+}

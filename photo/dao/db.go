@@ -12,6 +12,7 @@ import (
 // DBProvider provider to DB
 type DBProvider interface {
 	PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error)
+	QueryInput(query *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
 }
 
 // New Creates a DAO
@@ -19,7 +20,7 @@ func New(db DBProvider) DataAccessor {
 	return &DAO{db}
 }
 
-// OpenDB
+// OpenDB opens a session in the DB
 func OpenDB() (*dynamodb.DynamoDB, error) {
 	sess, err := session.NewSession(getConfig().session)
 	if err != nil {
@@ -40,6 +41,11 @@ func (dao *DAO) Create(input CreateInput, URL string) (*Photo, error) {
 		return nil, err
 	}
 	return ph, nil
+}
+
+// List query photos
+func (dao *DAO) List(query QueryInput) ([]Photo, error) {
+	return nil, nil
 }
 
 func (in CreateInput) photo(id string, URL string) *Photo {
