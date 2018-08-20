@@ -12,7 +12,7 @@ import (
 // DBProvider provider to DB
 type DBProvider interface {
 	PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error)
-	QueryInput(query *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
+	Query(query *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
 }
 
 // New Creates a DAO
@@ -35,8 +35,9 @@ func (dao *DAO) Create(input CreateInput, URL string) (*Photo, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	ph := input.photo(id.String(), URL)
-	err = dao.putItem(ph)
+	_, err = dao.db.PutItem(ph.putItemInput())
 	if err != nil {
 		return nil, err
 	}
@@ -45,18 +46,15 @@ func (dao *DAO) Create(input CreateInput, URL string) (*Photo, error) {
 
 // List query photos
 func (dao *DAO) List(query QueryInput) ([]Photo, error) {
+	// var resp1, err1 = dao.db.Query(query)
+	// if err1 != nil {
+	// 	fmt.Println(err1)
+	// } else {
+	// 	personObj := []Person{}
+	// 	err = dynamodbattribute.UnmarshalListOfMaps(resp1.Items, &personObj)
+	// 	log.Println(personObj)
+	// }
 	return nil, nil
-}
-
-func (in CreateInput) photo(id string, URL string) *Photo {
-	p := new(Photo)
-	p.AlbumID = in.AlbumID
-	p.Tags = in.Tags
-	p.Description = in.Description
-	p.Date = in.Date
-	p.ID = id
-	p.URL = URL
-	return p
 }
 
 // func listItems() ([]photo, error) {
@@ -141,9 +139,10 @@ func (in CreateInput) photo(id string, URL string) *Photo {
 // 	return putItem(ph)
 // }
 
-// Add a Photo record to DynamoDB.
-func (dao *DAO) putItem(ph *Photo) error {
-	input := &dynamodb.PutItemInput{
+// MAPPING METHODS
+
+func (ph *Photo) putItemInput() *dynamodb.PutItemInput {
+	return &dynamodb.PutItemInput{
 		TableName: aws.String("Photo"),
 		Item: map[string]*dynamodb.AttributeValue{
 			"AlbumID": {
@@ -166,6 +165,32 @@ func (dao *DAO) putItem(ph *Photo) error {
 			},
 		},
 	}
-	_, err := dao.db.PutItem(input)
-	return err
+}
+
+func (in CreateInput) photo(id string, URL string) *Photo {
+	p := new(Photo)
+	p.AlbumID = in.AlbumID
+	p.Tags = in.Tags
+	p.Description = in.Description
+	p.Date = in.Date
+	p.ID = id
+	p.URL = URL
+	return p
+}
+
+func (in QueryInput) query() *dynamodb.QueryInput {
+	return &dynamodb.QueryInput{
+		TableName: aws.String("Photo"),
+		IndexName: aws.String("AlbumID"),
+		KeyConditions: map[string]*dynamodb.Condition{
+			"AlbumID": {
+				ComparisonOperator: aws.String("EQ"),
+				AttributeValueList: []*dynamodb.AttributeValue{
+					{
+						S: aws.String(in.AlbumID),
+					},
+				},
+			},
+		},
+	}
 }

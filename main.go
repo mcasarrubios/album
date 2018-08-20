@@ -12,7 +12,7 @@ import (
 
 // App application type
 type App struct {
-	ctrl photo.HTTPController
+	photo photo.HTTPController
 }
 
 // use JSON logging when run by Up (including `up start`).
@@ -25,11 +25,11 @@ func init() {
 }
 
 func main() {
-	ctrl, err := photo.NewController()
+	photoCtrl, err := photo.NewController()
 	if err != nil {
 		log.WithError(err).Fatal("error creating photo controller")
 	}
-	app := &App{ctrl}
+	app := &App{photoCtrl}
 	http.HandleFunc("/", app.router)
 	addr := ":" + os.Getenv("PORT")
 	if err := http.ListenAndServe(addr, nil); err != nil {
@@ -40,9 +40,9 @@ func main() {
 func (app *App) router(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		app.ctrl.Get(w, r)
+		app.photo.Get(w, r)
 	case http.MethodPost:
-		app.ctrl.Create(w, r)
+		app.photo.Create(w, r)
 	case http.MethodPut:
 		// Update an existing record.
 	case http.MethodDelete:

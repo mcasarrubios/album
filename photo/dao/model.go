@@ -1,23 +1,29 @@
 package dao
 
-// CreateInput data to create a photo
-type CreateInput struct {
+// BasicPhoto info of a photo photo
+type BasicPhoto struct {
 	AlbumID     string   `json:"albumId"`
 	Tags        []string `json:"tags"`
 	Description string   `json:"description"`
 	Date        string   `json:"date"`
 }
 
-// QueryInput params to query photos
-type QueryInput struct {
-	CreateInput
-	ID string `json:"id"`
-}
-
 // Photo model
 type Photo struct {
+	BasicPhoto
+	ID  string `json:"id"`
 	URL string `json:"url"`
-	QueryInput
+}
+
+// CreateInput data to create a photo
+type CreateInput struct {
+	BasicPhoto
+}
+
+// QueryInput params to query photos
+type QueryInput struct {
+	BasicPhoto
+	ID string `json:"id"`
 }
 
 // DAO access to DB
