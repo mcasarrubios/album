@@ -54,14 +54,13 @@ func (ctrl *control) create(input DAO.CreateInput) (*DAO.Photo, error) {
 
 func (ctrl *control) Get(w http.ResponseWriter, r *http.Request) {
 	ph := &DAO.Photo{
-		URL: "https://static.allcloud.com/assets/images/blog/golang.png",
-		QueryInput: DAO.QueryInput{
-			ID: "213",
-			CreateInput: DAO.CreateInput{
-				Tags:        []string{"tag-1", "tag-2"},
-				Description: "Awesome description",
-				Date:        "2008-09-15T15:53:00+05:00",
-			},
+		URL: "http://my-album.awesome-photo.jpg",
+		ID:  "213",
+		BasicPhoto: DAO.BasicPhoto{
+			AlbumID:     "1",
+			Tags:        []string{"tag-1", "tag-2"},
+			Description: "Awesome description",
+			Date:        "2008-09-15T15:53:00+05:00",
 		},
 	}
 

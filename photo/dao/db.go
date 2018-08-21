@@ -1,11 +1,12 @@
 package dao
 
 import (
-	"strings"
+	"fmt"
+	"log"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -37,7 +38,13 @@ func (dao *DAO) Create(input CreateInput, URL string) (*Photo, error) {
 	}
 
 	ph := input.photo(id.String(), URL)
-	_, err = dao.db.PutItem(ph.putItemInput())
+	putItemInput, err := ph.dbPutItemInput()
+	fmt.Println(putItemInput)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = dao.db.PutItem(putItemInput)
 	if err != nil {
 		return nil, err
 	}
@@ -46,15 +53,20 @@ func (dao *DAO) Create(input CreateInput, URL string) (*Photo, error) {
 
 // List query photos
 func (dao *DAO) List(query QueryInput) ([]Photo, error) {
-	// var resp1, err1 = dao.db.Query(query)
-	// if err1 != nil {
-	// 	fmt.Println(err1)
-	// } else {
-	// 	personObj := []Person{}
-	// 	err = dynamodbattribute.UnmarshalListOfMaps(resp1.Items, &personObj)
-	// 	log.Println(personObj)
-	// }
-	return nil, nil
+	queryInput, err := query.dbQueryInput()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := dao.db.Query(queryInput)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	photoObj := []Photo{}
+	err = dynamodbattribute.UnmarshalListOfMaps(resp.Items, &photoObj)
+	log.Println(photoObj)
+	return photoObj, err
 }
 
 // func listItems() ([]photo, error) {
@@ -138,59 +150,3 @@ func (dao *DAO) List(query QueryInput) ([]Photo, error) {
 // 	ph.ID = id.String()
 // 	return putItem(ph)
 // }
-
-// MAPPING METHODS
-
-func (ph *Photo) putItemInput() *dynamodb.PutItemInput {
-	return &dynamodb.PutItemInput{
-		TableName: aws.String("Photo"),
-		Item: map[string]*dynamodb.AttributeValue{
-			"AlbumID": {
-				S: aws.String(ph.AlbumID),
-			},
-			"ID": {
-				S: aws.String(ph.ID),
-			},
-			"URL": {
-				S: aws.String(ph.URL),
-			},
-			"Tags": {
-				S: aws.String(strings.Join(ph.Tags, " ")),
-			},
-			"Description": {
-				S: aws.String(ph.Description),
-			},
-			"Date": {
-				S: aws.String(ph.Date),
-			},
-		},
-	}
-}
-
-func (in CreateInput) photo(id string, URL string) *Photo {
-	p := new(Photo)
-	p.AlbumID = in.AlbumID
-	p.Tags = in.Tags
-	p.Description = in.Description
-	p.Date = in.Date
-	p.ID = id
-	p.URL = URL
-	return p
-}
-
-func (in QueryInput) query() *dynamodb.QueryInput {
-	return &dynamodb.QueryInput{
-		TableName: aws.String("Photo"),
-		IndexName: aws.String("AlbumID"),
-		KeyConditions: map[string]*dynamodb.Condition{
-			"AlbumID": {
-				ComparisonOperator: aws.String("EQ"),
-				AttributeValueList: []*dynamodb.AttributeValue{
-					{
-						S: aws.String(in.AlbumID),
-					},
-				},
-			},
-		},
-	}
-}

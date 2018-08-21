@@ -20,10 +20,21 @@ type CreateInput struct {
 	BasicPhoto
 }
 
+// FilterInput fields
+type FilterInput struct {
+	AlbumID     string   `json:"albumId"`
+	Tags        []string `json:"tags"`
+	Description string   `json:"description"`
+	StartDate   string   `json:"startDate"`
+	EndDate     string   `json:"endDate"`
+}
+
 // QueryInput params to query photos
 type QueryInput struct {
-	BasicPhoto
-	ID string `json:"id"`
+	Filter  FilterInput
+	Project []string
+	Limit   int
+	LastKey map[string]string
 }
 
 // DAO access to DB
