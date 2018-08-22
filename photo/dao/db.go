@@ -2,7 +2,6 @@ package dao
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -57,7 +56,6 @@ func (dao *DAO) List(query QueryInput) ([]Photo, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	resp, err := dao.db.Query(queryInput)
 	if err != nil {
 		fmt.Println(err)
@@ -65,7 +63,8 @@ func (dao *DAO) List(query QueryInput) ([]Photo, error) {
 	}
 	photoObj := []Photo{}
 	err = dynamodbattribute.UnmarshalListOfMaps(resp.Items, &photoObj)
-	log.Println(photoObj)
+	// aaa, err := json.Marshal(resp.LastEvaluatedKey)
+	// log.Println(resp, base64.StdEncoding.EncodeToString(aaa))
 	return photoObj, err
 }
 

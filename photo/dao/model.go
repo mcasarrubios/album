@@ -1,18 +1,23 @@
 package dao
 
+// KeyPhoto key index fields
+type KeyPhoto struct {
+	AlbumID string `json:"albumId,omitempty"`
+	Date    string `json:"date,omitempty"`
+}
+
 // BasicPhoto info of a photo photo
 type BasicPhoto struct {
-	AlbumID     string   `json:"albumId"`
-	Tags        []string `json:"tags"`
-	Description string   `json:"description"`
-	Date        string   `json:"date"`
+	KeyPhoto
+	Tags        []string `json:"tags,omitempty"`
+	Description string   `json:"description,omitempty"`
 }
 
 // Photo model
 type Photo struct {
 	BasicPhoto
-	ID  string `json:"id"`
-	URL string `json:"url"`
+	ID  string `json:"id,omitempty"`
+	URL string `json:"url,omitempty"`
 }
 
 // CreateInput data to create a photo
@@ -31,10 +36,16 @@ type FilterInput struct {
 
 // QueryInput params to query photos
 type QueryInput struct {
-	Filter  FilterInput
-	Project []string
-	Limit   int
-	LastKey map[string]string
+	Filter  FilterInput       `json:"filter"`
+	Project []string          `json:"project"`
+	Limit   int               `json:"limit"`
+	LastKey map[string]string `json:"lastKey"`
+}
+
+// QueryOutput results of querying photos
+type QueryOutput struct {
+	Items   []Photo
+	LastKey KeyPhoto
 }
 
 // DAO access to DB

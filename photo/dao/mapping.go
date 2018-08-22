@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -32,45 +33,63 @@ func (ph *Photo) dbPutItemInput() (*dynamodb.PutItemInput, error) {
 }
 
 func (in QueryInput) dbQueryInput() (*dynamodb.QueryInput, error) {
-	keyCond := expression.Key("AlbumID").Equal(expression.Value(in.Filter.AlbumID))
-	filterCond := filterExpression(in.Filter)
-	proj := projectExpression(in.Project)
+	if in.Filter.AlbumID == "" {
+		return nil, errors.New("Missing required fields")
+	}
+	expr := expression.NewBuilder().WithKeyCondition(keyCondExpression(in.Filter))
 
-	expression, err := expression.NewBuilder().
-		WithKeyCondition(keyCond).
-		WithFilter(filterCond).
-		WithProjection(proj).
-		Build()
+	if len(in.Filter.Tags) > 0 || in.Filter.Description != "" {
+		expr = expr.WithFilter(filterExpression(in.Filter))
+	}
 
+	if len(in.Project) > 0 {
+		expr = expr.WithProjection(projectExpression(in.Project))
+	}
+
+	exprBuild, err := expr.Build()
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
-	return &dynamodb.QueryInput{
-		KeyConditionExpression:    expression.KeyCondition(),
-		ProjectionExpression:      expression.Projection(),
-		ExpressionAttributeNames:  expression.Names(),
-		ExpressionAttributeValues: expression.Values(),
+	query := &dynamodb.QueryInput{
+		KeyConditionExpression:    exprBuild.KeyCondition(),
+		FilterExpression:          exprBuild.Filter(),
+		ProjectionExpression:      exprBuild.Projection(),
+		ExpressionAttributeNames:  exprBuild.Names(),
+		ExpressionAttributeValues: exprBuild.Values(),
 		TableName:                 aws.String("Photo"),
-	}, nil
+	}
+
+	if in.Limit > 0 {
+		query.SetLimit(int64(in.Limit))
+	}
+
+	return query, nil
+}
+
+func keyCondExpression(filter FilterInput) expression.KeyConditionBuilder {
+	conditions := expression.Key("albumId").Equal(expression.Value(filter.AlbumID))
+	if filter.StartDate != "" && filter.EndDate != "" {
+		conditions = expression.KeyAnd(conditions,
+			expression.KeyBetween(expression.Key("date"),
+				expression.Value(filter.StartDate),
+				expression.Value(filter.EndDate)))
+	}
+	return conditions
 }
 
 func filterExpression(filter FilterInput) expression.ConditionBuilder {
-	var conditions expression.ConditionBuilder
-
+	isNew := true
+	conditions := expression.ConditionBuilder{}
 	for _, tag := range filter.Tags {
-		conditions = expression.And(conditions, expression.Contains(expression.Name("Tags"), tag))
+		conditions = setCondition(conditions, expression.Contains(expression.Name("tags"), tag), isNew)
+		isNew = false
 	}
-
-	if filter.StartDate != "" && filter.EndDate != "" {
-		conditions = expression.And(conditions, expression.Between(expression.Name("Date"), expression.Value(filter.StartDate), expression.Value(filter.EndDate)))
-	}
-
 	if filter.Description != "" {
-		conditions = expression.And(conditions, expression.Contains(expression.Name("Description"), filter.Description))
+		conditions = setCondition(conditions, expression.Contains(expression.Name("description"), filter.Description), isNew)
+		isNew = false
 	}
-
 	return conditions
 }
 
@@ -80,6 +99,13 @@ func projectExpression(projection []string) expression.ProjectionBuilder {
 		proj = expression.AddNames(proj, expression.Name(name))
 	}
 	return proj
+}
+
+func setCondition(origin expression.ConditionBuilder, add expression.ConditionBuilder, isNew bool) expression.ConditionBuilder {
+	if isNew {
+		return add
+	}
+	return expression.And(origin, add)
 }
 
 // func mapStruct(in interface{}) map[string]interface{} {

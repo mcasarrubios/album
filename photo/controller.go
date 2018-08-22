@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 
 	DAO "github.com/mcasarrubios/album/photo/dao"
 )
@@ -40,7 +41,7 @@ func (ctrl *control) Create(w http.ResponseWriter, r *http.Request) {
 
 	ph, err := ctrl.create(input)
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -53,18 +54,31 @@ func (ctrl *control) create(input DAO.CreateInput) (*DAO.Photo, error) {
 }
 
 func (ctrl *control) Get(w http.ResponseWriter, r *http.Request) {
-	ph := &DAO.Photo{
-		URL: "http://my-album.awesome-photo.jpg",
-		ID:  "213",
-		BasicPhoto: DAO.BasicPhoto{
-			AlbumID:     "1",
-			Tags:        []string{"tag-1", "tag-2"},
-			Description: "Awesome description",
-			Date:        "2008-09-15T15:53:00+05:00",
-		},
+	qParams := r.URL.Query()
+	filter := DAO.FilterInput{
+		AlbumID:     qParams.Get("albumId"),
+		Tags:        qParams["tags"],
+		Description: qParams.Get("description"),
+		StartDate:   qParams.Get("startDate"),
+		EndDate:     qParams.Get("endDate"),
+	}
+	query := DAO.QueryInput{
+		Filter:  filter,
+		Project: qParams["project"],
+		// LastKey: qParams.Get("lastKey"),
+	}
+	err := setLimit(qParams.Get("limit"), &query)
+	if err != nil {
+		http.Error(w, "Invalid fields", http.StatusBadRequest)
+		return
 	}
 
-	sendJSON(w, ph)
+	items, err := ctrl.dao.List(query)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	sendJSON(w, items)
 }
 
 func decode(body io.ReadCloser) (DAO.CreateInput, error) {
@@ -83,4 +97,15 @@ func sendJSON(w http.ResponseWriter, item interface{}) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
+}
+
+func setLimit(limit string, query *DAO.QueryInput) error {
+	if limit != "" {
+		result, err := strconv.Atoi(limit)
+		if err != nil {
+			return err
+		}
+		query.Limit = result
+	}
+	return nil
 }

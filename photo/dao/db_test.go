@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/mcasarrubios/album/test"
 )
 
@@ -32,31 +33,27 @@ var photos = []Photo{
 	},
 }
 
-// func queryOutput() *dynamodb.QueryOutput {
-// 	var items []map[string]*dynamodb.AttributeValue
-
-// 	for i, photo := photos {
-// 		aaa := common.MapStruct(photo)
-// 		item := make(map[string]*dynamodb.AttributeValue)
-// 		item["URL"] =
-// 		items = items.append(make)
-// 	}
-
-// 	items
-// 	return &dynamodb.QueryOutput{
-// 		Items:
-// 	}
-// }
+func queryOutput() []map[string]*dynamodb.AttributeValue {
+	var items []map[string]*dynamodb.AttributeValue
+	for _, ph := range photos {
+		item, _ := dynamodbattribute.MarshalMap(ph)
+		items = append(items, item)
+	}
+	return items
+}
 
 func (db *MockDB) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 	return new(dynamodb.PutItemOutput), nil
 }
 
 func (db *MockDB) Query(query *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
-	return new(dynamodb.QueryOutput), nil
+	items := queryOutput()
+	return &dynamodb.QueryOutput{
+		Items: items,
+	}, nil
 }
 
-func TestCreatePhoto(t *testing.T) {
+func TestCreate(t *testing.T) {
 	input := CreateInput{
 		BasicPhoto: BasicPhoto{
 			AlbumID:     photos[0].AlbumID,
@@ -71,11 +68,17 @@ func TestCreatePhoto(t *testing.T) {
 	test.Equals(t, expected, photo)
 }
 
-// func TestListPhoto(t *testing.T) {
-// 	query := QueryInput{
-// 		BasicPhoto: BasicPhoto{AlbumID: "1"},
-// 	}
-// 	actual, err := dao.List(query)
-// 	test.Ok(t, err)
-// 	test.Equals(t, photos, actual)
-// }
+func TestListRequiredFields(t *testing.T) {
+	query := QueryInput{}
+	_, err := dao.List(query)
+	test.Equals(t, "missing required fields", err.Error())
+}
+
+func TestListPhoto(t *testing.T) {
+	query := QueryInput{
+		Filter: FilterInput{AlbumID: "1"},
+	}
+	actual, err := dao.List(query)
+	test.Ok(t, err)
+	test.Equals(t, photos, actual)
+}
