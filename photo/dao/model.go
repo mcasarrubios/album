@@ -36,16 +36,16 @@ type FilterInput struct {
 
 // QueryInput params to query photos
 type QueryInput struct {
-	Filter  FilterInput       `json:"filter"`
-	Project []string          `json:"project"`
-	Limit   int               `json:"limit"`
-	LastKey map[string]string `json:"lastKey"`
+	Filter   FilterInput `json:"filter"`
+	Project  []string    `json:"project"`
+	Limit    int         `json:"limit"`
+	StartKey string      `json:"startKey"`
 }
 
 // QueryOutput results of querying photos
 type QueryOutput struct {
-	Items   []Photo
-	LastKey KeyPhoto
+	Items   []Photo `json:"items"`
+	LastKey string  `json:"lastKey,omitempty"`
 }
 
 // DAO access to DB
@@ -57,6 +57,6 @@ type DAO struct {
 type DataAccessor interface {
 	Create(input CreateInput, URL string) (*Photo, error)
 	// Get(input GetInput) (*Photo, error)
-	List(query QueryInput) ([]Photo, error)
+	List(query QueryInput) (*QueryOutput, error)
 	// Delete(input CreateInput) (error)
 }

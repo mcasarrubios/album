@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -51,7 +53,7 @@ func (dao *DAO) Create(input CreateInput, URL string) (*Photo, error) {
 }
 
 // List query photos
-func (dao *DAO) List(query QueryInput) ([]Photo, error) {
+func (dao *DAO) List(query QueryInput) (*QueryOutput, error) {
 	queryInput, err := query.dbQueryInput()
 	if err != nil {
 		return nil, err
@@ -61,57 +63,52 @@ func (dao *DAO) List(query QueryInput) ([]Photo, error) {
 		fmt.Println(err)
 		return nil, err
 	}
-	photoObj := []Photo{}
-	err = dynamodbattribute.UnmarshalListOfMaps(resp.Items, &photoObj)
-	// aaa, err := json.Marshal(resp.LastEvaluatedKey)
-	// log.Println(resp, base64.StdEncoding.EncodeToString(aaa))
-	return photoObj, err
+	return queryOutput(resp)
 }
 
-// func listItems() ([]photo, error) {
-// 	var queryInput = &dynamodb.QueryInput{
-// 		TableName: aws.String("Photo"),
-// 		IndexName: aws.String("AlbumID"),
-// 		KeyConditions: map[string]*dynamodb.Condition{
-// 			"modifier": {
-// 				ComparisonOperator: aws.String("EQ"),
-// 				AttributeValueList: []*dynamodb.AttributeValue{
-// 					{
-// 						S: aws.String("David"),
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
+func queryOutput(dbOutput *dynamodb.QueryOutput) (*QueryOutput, error) {
+	photos := []Photo{}
+	err := dynamodbattribute.UnmarshalListOfMaps(dbOutput.Items, &photos)
+	if err != nil {
+		return nil, err
+	}
 
-// 	expressionAttrs := make(map[string]*dynamodb.AttributeValue)
-// 	expressionAttrs[":albumID"] = &dynamodb.AttributeValue{S: aws.String("albumID")}
+	encoded, err := encodeLastKey(dbOutput.LastEvaluatedKey)
+	if err != nil {
+		return nil, err
+	}
+	return &QueryOutput{
+		Items:   photos,
+		LastKey: encoded,
+	}, nil
+}
 
-// 	input := &dynamodb.QueryInput{
-// 		TableName: aws.String("Photo"),
-// 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-// 			":albumID": {
-// 				S: aws.String(albumID),
-// 			},
-// 			":albumID": {
-// 				S: aws.String(albumID),
-// 			},
-// 			":albumID": {
-// 				S: aws.String(albumID),
-// 			},
-// 		},
-// 		KeyConditionExpression: aws.String("Artist = :v1"),
-// 		ProjectionExpression:   aws.String("SongTitle"),
-// 	}
-// }
+func encodeLastKey(lastKey map[string]*dynamodb.AttributeValue) (string, error) {
+	key := KeyPhoto{}
+	err := dynamodbattribute.UnmarshalMap(lastKey, &key)
+	if err != nil || key.AlbumID == "" {
+		return "", err
+	}
+	js, err := json.Marshal(key)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(js), nil
+}
 
-// func makeQuery(q queryInput) {
-// 	expressionAttrs := make(map[string]*dynamodb.AttributeValue)
+func decodeStartKey(encoded string) (map[string]*dynamodb.AttributeValue, error) {
+	decoded, err := base64.URLEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, err
+	}
 
-// 	if q.AlbumID != "" {
-
-// 	}
-// }
+	lastKey := KeyPhoto{}
+	err = json.Unmarshal(decoded, &lastKey)
+	if err != nil {
+		return nil, err
+	}
+	return dynamodbattribute.MarshalMap(lastKey)
+}
 
 // func getItem(id string) (*book, error) {
 
@@ -139,13 +136,4 @@ func (dao *DAO) List(query QueryInput) ([]Photo, error) {
 //     }
 
 //     return bk, nil
-// }
-
-// func createItem(ph *photo) error {
-// 	id, err := uuid.NewV4()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	ph.ID = id.String()
-// 	return putItem(ph)
 // }

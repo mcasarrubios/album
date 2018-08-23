@@ -16,24 +16,28 @@ var photos = []Photo{
 		URL: "http://my-photo.jpg",
 		ID:  "111",
 		BasicPhoto: BasicPhoto{
-			AlbumID:     "1",
+			KeyPhoto: KeyPhoto{
+				AlbumID: "1",
+				Date:    "2008-09-15T15:53:00+05:00",
+			},
 			Tags:        []string{"tag-111-A", "tag-111-B"},
 			Description: "Awesome description 1",
-			Date:        "2008-09-15T15:53:00+05:00",
 		},
 	}, {
 		URL: "http://my-photo2.jpg",
 		ID:  "222",
 		BasicPhoto: BasicPhoto{
-			AlbumID:     "1",
+			KeyPhoto: KeyPhoto{
+				AlbumID: "1",
+				Date:    "2008-09-25T15:53:00+05:00",
+			},
 			Tags:        []string{"tag-222-A", "tag-222-B"},
 			Description: "Awesome description 2",
-			Date:        "2009-09-15T15:53:00+05:00",
 		},
 	},
 }
 
-func queryOutput() []map[string]*dynamodb.AttributeValue {
+func dbQueryOutput() []map[string]*dynamodb.AttributeValue {
 	var items []map[string]*dynamodb.AttributeValue
 	for _, ph := range photos {
 		item, _ := dynamodbattribute.MarshalMap(ph)
@@ -47,7 +51,7 @@ func (db *MockDB) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput
 }
 
 func (db *MockDB) Query(query *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
-	items := queryOutput()
+	items := dbQueryOutput()
 	return &dynamodb.QueryOutput{
 		Items: items,
 	}, nil
@@ -56,10 +60,12 @@ func (db *MockDB) Query(query *dynamodb.QueryInput) (*dynamodb.QueryOutput, erro
 func TestCreate(t *testing.T) {
 	input := CreateInput{
 		BasicPhoto: BasicPhoto{
-			AlbumID:     photos[0].AlbumID,
+			KeyPhoto: KeyPhoto{
+				AlbumID: photos[0].AlbumID,
+				Date:    photos[0].Date,
+			},
 			Tags:        photos[0].Tags,
 			Description: photos[0].Description,
-			Date:        photos[0].Date,
 		},
 	}
 	photo, err := dao.Create(input, photos[0].URL)
@@ -71,7 +77,7 @@ func TestCreate(t *testing.T) {
 func TestListRequiredFields(t *testing.T) {
 	query := QueryInput{}
 	_, err := dao.List(query)
-	test.Equals(t, "missing required fields", err.Error())
+	test.Equals(t, "Missing required fields", err.Error())
 }
 
 func TestListPhoto(t *testing.T) {
@@ -80,5 +86,5 @@ func TestListPhoto(t *testing.T) {
 	}
 	actual, err := dao.List(query)
 	test.Ok(t, err)
-	test.Equals(t, photos, actual)
+	test.Equals(t, photos, actual.Items)
 }

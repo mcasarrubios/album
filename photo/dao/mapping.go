@@ -65,6 +65,15 @@ func (in QueryInput) dbQueryInput() (*dynamodb.QueryInput, error) {
 		query.SetLimit(int64(in.Limit))
 	}
 
+	if in.StartKey != "" {
+		startKey, err := decodeStartKey(in.StartKey)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+		query.SetExclusiveStartKey(startKey)
+	}
+
 	return query, nil
 }
 

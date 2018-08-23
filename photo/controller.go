@@ -63,9 +63,9 @@ func (ctrl *control) Get(w http.ResponseWriter, r *http.Request) {
 		EndDate:     qParams.Get("endDate"),
 	}
 	query := DAO.QueryInput{
-		Filter:  filter,
-		Project: qParams["project"],
-		// LastKey: qParams.Get("lastKey"),
+		Filter:   filter,
+		Project:  qParams["project"],
+		StartKey: qParams.Get("startKey"),
 	}
 	err := setLimit(qParams.Get("limit"), &query)
 	if err != nil {
