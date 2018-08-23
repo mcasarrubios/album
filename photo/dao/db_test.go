@@ -88,3 +88,7 @@ func TestListPhoto(t *testing.T) {
 	test.Ok(t, err)
 	test.Equals(t, photos, actual.Items)
 }
+
+func TestDeletePhoto(t *testing.T) {
+
+}

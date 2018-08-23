@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/mcasarrubios/album/common"
 )
 
 func (in CreateInput) photo(id string, URL string) *Photo {
@@ -103,6 +104,10 @@ func filterExpression(filter FilterInput) expression.ConditionBuilder {
 }
 
 func projectExpression(projection []string) expression.ProjectionBuilder {
+	if !common.Contains(projection, "id") {
+		projection = append(projection, "id")
+	}
+
 	proj := expression.NamesList(expression.Name(projection[0]))
 	for _, name := range projection[1:] {
 		proj = expression.AddNames(proj, expression.Name(name))
