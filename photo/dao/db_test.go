@@ -88,7 +88,32 @@ func TestListPhoto(t *testing.T) {
 	test.Ok(t, err)
 	test.Equals(t, photos, actual.Items)
 }
-
-func TestDeletePhoto(t *testing.T) {
-
+func TestGetPhoto(t *testing.T) {
+	query := QueryInput{
+		Filter: FilterInput{AlbumID: "1"},
+	}
+	actual, err := dao.List(query)
+	test.Ok(t, err)
+	input := GetInput{
+		AlbumID: actual.Items[0].AlbumID,
+		ID:      actual.Items[0].ID,
+	}
+	photo, err := dao.Get(input)
+	test.Ok(t, err)
+	test.Equals(t, input.ID, photo.ID)
 }
+
+// func TestUpdateDescriptionPhoto(t *testing.T) {
+// 	photo := BasicPhoto{
+// 		KeyPhoto: KeyPhoto{
+// 			AlbumID: photos[0].AlbumID,
+// 			Date:    photos[0].Date,
+// 		},
+// 		Tags:        photos[0].Tags,
+// 		Description: "New Description",
+// 	}
+// 	photo, err := dao.Update(photo)
+// 	test.Ok(t, err)
+// 	expected := input.photo(photo.ID, photos[0].URL)
+// 	test.Equals(t, expected, photo)
+// }

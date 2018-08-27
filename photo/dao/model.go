@@ -25,6 +25,13 @@ type CreateInput struct {
 	BasicPhoto
 }
 
+// GetInput data to get a photo
+type GetInput struct {
+	AlbumID string   `json:"albumId"`
+	ID      string   `json:"id"`
+	Project []string `json:"project"`
+}
+
 // FilterInput fields
 type FilterInput struct {
 	AlbumID     string   `json:"albumId"`
@@ -56,7 +63,7 @@ type DAO struct {
 // DataAccessor accesor to DB
 type DataAccessor interface {
 	Create(input CreateInput, URL string) (*Photo, error)
-	// Get(input GetInput) (*Photo, error)
+	Get(input GetInput) (*Photo, error)
 	List(query QueryInput) (*QueryOutput, error)
 	// Delete(input CreateInput) (error)
 }

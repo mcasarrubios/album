@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -74,8 +76,35 @@ func (in QueryInput) dbQueryInput() (*dynamodb.QueryInput, error) {
 		}
 		query.SetExclusiveStartKey(startKey)
 	}
-
 	return query, nil
+}
+
+func (in GetInput) dbQueryInput() (*dynamodb.QueryInput, error) {
+	if in.AlbumID == "" || in.ID == "" {
+		return nil, errors.New("Missing required fields")
+	}
+	expr := expression.NewBuilder().
+		WithKeyCondition(expression.Key("albumId").Equal(expression.Value(in.AlbumID))).
+		WithFilter(expression.Name("id").Equal(expression.Value(in.ID)))
+
+	if len(in.Project) > 0 {
+		expr = expr.WithProjection(projectExpression(in.Project))
+	}
+
+	exprBuild, err := expr.Build()
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return &dynamodb.QueryInput{
+		KeyConditionExpression:    exprBuild.KeyCondition(),
+		FilterExpression:          exprBuild.Filter(),
+		ProjectionExpression:      exprBuild.Projection(),
+		ExpressionAttributeNames:  exprBuild.Names(),
+		ExpressionAttributeValues: exprBuild.Values(),
+		TableName:                 aws.String("Photo"),
+	}, nil
 }
 
 func keyCondExpression(filter FilterInput) expression.KeyConditionBuilder {
@@ -107,7 +136,6 @@ func projectExpression(projection []string) expression.ProjectionBuilder {
 	if !common.Contains(projection, "id") {
 		projection = append(projection, "id")
 	}
-
 	proj := expression.NamesList(expression.Name(projection[0]))
 	for _, name := range projection[1:] {
 		proj = expression.AddNames(proj, expression.Name(name))
@@ -122,8 +150,46 @@ func setCondition(origin expression.ConditionBuilder, add expression.ConditionBu
 	return expression.And(origin, add)
 }
 
-// func mapStruct(in interface{}) map[string]interface{} {
-// 	var inInterface map[string]interface{}
-// 	inrec, _ := json.Marshal(in)
-// 	return json.Unmarshal(inrec, &inInterface)
-// }
+func queryOutput(dbOutput *dynamodb.QueryOutput) (*QueryOutput, error) {
+	photos := []Photo{}
+	err := dynamodbattribute.UnmarshalListOfMaps(dbOutput.Items, &photos)
+	if err != nil {
+		return nil, err
+	}
+
+	encoded, err := encodeLastKey(dbOutput.LastEvaluatedKey)
+	if err != nil {
+		return nil, err
+	}
+	return &QueryOutput{
+		Items:   photos,
+		LastKey: encoded,
+	}, nil
+}
+
+func encodeLastKey(lastKey map[string]*dynamodb.AttributeValue) (string, error) {
+	key := KeyPhoto{}
+	err := dynamodbattribute.UnmarshalMap(lastKey, &key)
+	if err != nil || key.AlbumID == "" {
+		return "", err
+	}
+	js, err := json.Marshal(key)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(js), nil
+}
+
+func decodeStartKey(encoded string) (map[string]*dynamodb.AttributeValue, error) {
+	decoded, err := base64.URLEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, err
+	}
+
+	lastKey := KeyPhoto{}
+	err = json.Unmarshal(decoded, &lastKey)
+	if err != nil {
+		return nil, err
+	}
+	return dynamodbattribute.MarshalMap(lastKey)
+}

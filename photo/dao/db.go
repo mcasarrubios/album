@@ -1,19 +1,17 @@
 package dao
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	uuid "github.com/satori/go.uuid"
 )
 
 // DBProvider provider to DB
 type DBProvider interface {
 	PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error)
+	// GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
 	Query(query *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
 }
 
@@ -58,82 +56,27 @@ func (dao *DAO) List(query QueryInput) (*QueryOutput, error) {
 	if err != nil {
 		return nil, err
 	}
-	resp, err := dao.db.Query(queryInput)
+	return dao.query(queryInput)
+}
+
+// Get a photo
+func (dao *DAO) Get(input GetInput) (*Photo, error) {
+	queryInput, err := input.dbQueryInput()
+	if err != nil {
+		return nil, err
+	}
+	output, err := dao.query(queryInput)
+	if len(output.Items) != 1 {
+		return &output.Items[0], nil
+	}
+	return nil, nil
+}
+
+func (dao *DAO) query(queryInput *dynamodb.QueryInput) (*QueryOutput, error) {
+	output, err := dao.db.Query(queryInput)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
-	return queryOutput(resp)
+	return queryOutput(output)
 }
-
-func queryOutput(dbOutput *dynamodb.QueryOutput) (*QueryOutput, error) {
-	photos := []Photo{}
-	err := dynamodbattribute.UnmarshalListOfMaps(dbOutput.Items, &photos)
-	if err != nil {
-		return nil, err
-	}
-
-	encoded, err := encodeLastKey(dbOutput.LastEvaluatedKey)
-	if err != nil {
-		return nil, err
-	}
-	return &QueryOutput{
-		Items:   photos,
-		LastKey: encoded,
-	}, nil
-}
-
-func encodeLastKey(lastKey map[string]*dynamodb.AttributeValue) (string, error) {
-	key := KeyPhoto{}
-	err := dynamodbattribute.UnmarshalMap(lastKey, &key)
-	if err != nil || key.AlbumID == "" {
-		return "", err
-	}
-	js, err := json.Marshal(key)
-	if err != nil {
-		return "", err
-	}
-	return base64.URLEncoding.EncodeToString(js), nil
-}
-
-func decodeStartKey(encoded string) (map[string]*dynamodb.AttributeValue, error) {
-	decoded, err := base64.URLEncoding.DecodeString(encoded)
-	if err != nil {
-		return nil, err
-	}
-
-	lastKey := KeyPhoto{}
-	err = json.Unmarshal(decoded, &lastKey)
-	if err != nil {
-		return nil, err
-	}
-	return dynamodbattribute.MarshalMap(lastKey)
-}
-
-// func getItem(id string) (*book, error) {
-
-//     input := &dynamodb.GetItemInput{
-//         TableName: aws.String("Photo"),
-//         Key: map[string]*dynamodb.AttributeValue{
-//             "ID": {
-//                 S: aws.String(id),
-//             },
-//         },
-//     }
-
-//     result, err := db.GetItem(input)
-//     if err != nil {
-//         return nil, err
-//     }
-//     if result.Item == nil {
-//         return nil, nil
-//     }
-
-//     bk := new(book)
-//     err = dynamodbattribute.UnmarshalMap(result.Item, bk)
-//     if err != nil {
-//         return nil, err
-//     }
-
-//     return bk, nil
-// }
