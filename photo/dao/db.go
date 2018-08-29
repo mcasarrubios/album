@@ -66,7 +66,8 @@ func (dao *DAO) Get(input GetInput) (*Photo, error) {
 		return nil, err
 	}
 	output, err := dao.query(queryInput)
-	if len(output.Items) != 1 {
+
+	if len(output.Items) == 1 {
 		return &output.Items[0], nil
 	}
 	return nil, nil

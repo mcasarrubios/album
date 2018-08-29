@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/julienschmidt/httprouter"
 	DAO "github.com/mcasarrubios/album/photo/dao"
 )
 
@@ -15,9 +16,12 @@ type control struct {
 
 // HTTPController of photo resource
 type HTTPController interface {
-	Create(w http.ResponseWriter, r *http.Request)
-	Get(w http.ResponseWriter, r *http.Request)
+	Create(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+	Get(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+	List(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 }
+
+const albumID = "1"
 
 // NewController creates a photo controller
 func NewController() (HTTPController, error) {
@@ -27,17 +31,19 @@ func NewController() (HTTPController, error) {
 }
 
 // Create a photo
-func (ctrl *control) Create(w http.ResponseWriter, r *http.Request) {
+func (ctrl *control) Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	input, err := decode(r.Body)
 	if err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	if input.AlbumID == "" || input.Date == "" {
+	if input.Date == "" {
 		http.Error(w, "Fill required fields", http.StatusBadRequest)
 		return
 	}
+
+	input.AlbumID = albumID
 
 	ph, err := ctrl.create(input)
 	if err != nil {
@@ -53,10 +59,26 @@ func (ctrl *control) create(input DAO.CreateInput) (*DAO.Photo, error) {
 	return ctrl.dao.Create(input, URL)
 }
 
-func (ctrl *control) Get(w http.ResponseWriter, r *http.Request) {
+// Get a photo
+func (ctrl *control) Get(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	input := DAO.GetInput{
+		AlbumID: albumID,
+		ID:      ps.ByName("photoID"),
+		Fields:  r.URL.Query()["fields"],
+	}
+	photo, err := ctrl.dao.Get(input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	sendJSON(w, photo)
+}
+
+// List photos
+func (ctrl *control) List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	qParams := r.URL.Query()
 	filter := DAO.FilterInput{
-		AlbumID:     qParams.Get("albumId"),
+		AlbumID:     albumID,
 		Tags:        qParams["tags"],
 		Description: qParams.Get("description"),
 		StartDate:   qParams.Get("startDate"),
@@ -64,7 +86,7 @@ func (ctrl *control) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	query := DAO.QueryInput{
 		Filter:   filter,
-		Project:  qParams["project"],
+		Fields:   qParams["fields"],
 		StartKey: qParams.Get("startKey"),
 	}
 	err := setLimit(qParams.Get("limit"), &query)

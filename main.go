@@ -7,13 +7,9 @@ import (
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/json"
 	"github.com/apex/log/handlers/text"
+	"github.com/julienschmidt/httprouter"
 	"github.com/mcasarrubios/album/photo"
 )
-
-// App application type
-type App struct {
-	photo photo.HTTPController
-}
 
 // use JSON logging when run by Up (including `up start`).
 func init() {
@@ -29,25 +25,13 @@ func main() {
 	if err != nil {
 		log.WithError(err).Fatal("error creating photo controller")
 	}
-	app := &App{photoCtrl}
-	http.HandleFunc("/", app.router)
-	addr := ":" + os.Getenv("PORT")
-	if err := http.ListenAndServe(addr, nil); err != nil {
-		log.WithError(err).Fatal("error listening")
-	}
-}
+	router := httprouter.New()
+	router.GET("/", photoCtrl.List)
+	router.POST("/", photoCtrl.Create)
+	router.GET("/:photoID", photoCtrl.Get)
 
-func (app *App) router(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		app.photo.Get(w, r)
-	case http.MethodPost:
-		app.photo.Create(w, r)
-	case http.MethodPut:
-		// Update an existing record.
-	case http.MethodDelete:
-		// Remove the record.
-	default:
-		// Give an error message.
+	addr := ":" + os.Getenv("PORT")
+	if err := http.ListenAndServe(addr, router); err != nil {
+		log.WithError(err).Fatal("error listening")
 	}
 }

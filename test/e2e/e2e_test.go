@@ -49,8 +49,8 @@ const schema = `{
 func TestGetPhotos(t *testing.T) {
 	test.Get("/").
 		AddQuery("albumId", "1").
-		AddQuery("project", "description").
-		// AddQuery("project", "tags").
+		AddQuery("fields", "description").
+		// AddQuery("fieldså", "tags").
 		Expect(t).
 		Status(200).
 		Type("json").

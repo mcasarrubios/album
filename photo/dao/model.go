@@ -29,7 +29,7 @@ type CreateInput struct {
 type GetInput struct {
 	AlbumID string   `json:"albumId"`
 	ID      string   `json:"id"`
-	Project []string `json:"project"`
+	Fields  []string `json:"fields"`
 }
 
 // FilterInput fields
@@ -44,7 +44,7 @@ type FilterInput struct {
 // QueryInput params to query photos
 type QueryInput struct {
 	Filter   FilterInput `json:"filter"`
-	Project  []string    `json:"project"`
+	Fields   []string    `json:"fields"`
 	Limit    int         `json:"limit"`
 	StartKey string      `json:"startKey"`
 }

@@ -45,8 +45,8 @@ func (in QueryInput) dbQueryInput() (*dynamodb.QueryInput, error) {
 		expr = expr.WithFilter(filterExpression(in.Filter))
 	}
 
-	if len(in.Project) > 0 {
-		expr = expr.WithProjection(projectExpression(in.Project))
+	if len(in.Fields) > 0 {
+		expr = expr.WithProjection(projectExpression(in.Fields))
 	}
 
 	exprBuild, err := expr.Build()
@@ -87,8 +87,8 @@ func (in GetInput) dbQueryInput() (*dynamodb.QueryInput, error) {
 		WithKeyCondition(expression.Key("albumId").Equal(expression.Value(in.AlbumID))).
 		WithFilter(expression.Name("id").Equal(expression.Value(in.ID)))
 
-	if len(in.Project) > 0 {
-		expr = expr.WithProjection(projectExpression(in.Project))
+	if len(in.Fields) > 0 {
+		expr = expr.WithProjection(projectExpression(in.Fields))
 	}
 
 	exprBuild, err := expr.Build()
