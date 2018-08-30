@@ -1,0 +1,41 @@
+{
+    "title": "Query Output",
+    "type": "object",
+    "properties": {
+        "items": {
+            "type": "array",
+            "minItems": "{{minItems}}",
+            "maxItems": "{{maxItems}}",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "albumId": {
+                        "type": "string"
+                    },
+                    "date": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": ["{{requiredFields}}"]
+            }
+        },
+        "lastKey": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "items"
+    ]
+}

@@ -103,17 +103,17 @@ func TestGetPhoto(t *testing.T) {
 	test.Equals(t, input.ID, photo.ID)
 }
 
-// func TestUpdateDescriptionPhoto(t *testing.T) {
-// 	photo := BasicPhoto{
-// 		KeyPhoto: KeyPhoto{
-// 			AlbumID: photos[0].AlbumID,
-// 			Date:    photos[0].Date,
-// 		},
-// 		Tags:        photos[0].Tags,
-// 		Description: "New Description",
-// 	}
-// 	photo, err := dao.Update(photo)
-// 	test.Ok(t, err)
-// 	expected := input.photo(photo.ID, photos[0].URL)
-// 	test.Equals(t, expected, photo)
-// }
+func TestUpdateDescriptionPhoto(t *testing.T) {
+	photo := BasicPhoto{
+		KeyPhoto: KeyPhoto{
+			AlbumID: photos[0].AlbumID,
+			Date:    photos[0].Date,
+		},
+		Tags:        photos[0].Tags,
+		Description: "New Description",
+	}
+	photo, err := dao.Update(photo)
+	test.Ok(t, err)
+	expected := input.photo(photo.ID, photos[0].URL)
+	test.Equals(t, expected, photo)
+}
