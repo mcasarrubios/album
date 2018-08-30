@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/mcasarrubios/album/test"
@@ -42,7 +41,6 @@ func TestGetPhotosLimit(t *testing.T) {
 	}
 	schema, err := schemas.Schema("query-output", opts)
 	testUtils.Ok(t, err)
-	fmt.Println("--->", schema)
 	test.Get("/").
 		AddQuery("limit", "1").
 		Expect(t).
