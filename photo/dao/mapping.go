@@ -193,3 +193,20 @@ func decodeStartKey(encoded string) (map[string]*dynamodb.AttributeValue, error)
 	}
 	return dynamodbattribute.MarshalMap(lastKey)
 }
+
+func (in DeleteInput) dbDeleteInput() (*dynamodb.DeleteItemInput, error) {
+	if in.AlbumID == "" || in.ID == "" {
+		return nil, errors.New("Missing required fields")
+	}
+	return &dynamodb.DeleteItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"albumId": {
+				N: aws.String(in.AlbumID),
+			},
+			"id": {
+				S: aws.String(in.ID),
+			},
+		},
+		TableName: aws.String("Photo"),
+	}, nil
+}

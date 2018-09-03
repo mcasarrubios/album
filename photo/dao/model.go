@@ -32,6 +32,18 @@ type GetInput struct {
 	Fields  []string `json:"fields"`
 }
 
+// PutInput data for updating a photo
+type PutInput struct {
+	AlbumID string `json:"albumId"`
+	ID      string `json:"id"`
+}
+
+// DeleteInput data for deleting a photo
+type DeleteInput struct {
+	AlbumID string `json:"albumId"`
+	ID      string `json:"id"`
+}
+
 // FilterInput fields
 type FilterInput struct {
 	AlbumID     string   `json:"albumId"`
@@ -65,5 +77,5 @@ type DataAccessor interface {
 	Create(input CreateInput, URL string) (*Photo, error)
 	Get(input GetInput) (*Photo, error)
 	List(query QueryInput) (*QueryOutput, error)
-	// Delete(input CreateInput) (error)
+	Delete(input DeleteInput) error
 }

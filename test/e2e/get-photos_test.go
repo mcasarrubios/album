@@ -17,9 +17,9 @@ var test = baloo.New(apiURL())
 
 func TestGetPhotosProjection(t *testing.T) {
 	opts := schemas.Placeholders{
-		Fields:   []string{"description", "tags"},
-		MinItems: "1",
-		MaxItems: "100",
+		ItemFields: []string{"description", "tags"},
+		MinItems:   "1",
+		MaxItems:   "100",
 	}
 	schema, err := schemas.Schema("query-output", opts)
 	testUtils.Ok(t, err)
@@ -35,9 +35,25 @@ func TestGetPhotosProjection(t *testing.T) {
 
 func TestGetPhotosLimit(t *testing.T) {
 	opts := schemas.Placeholders{
-		Fields:   []string{},
 		MinItems: "1",
 		MaxItems: "1",
+	}
+	schema, err := schemas.Schema("query-output", opts)
+	testUtils.Ok(t, err)
+	test.Get("/").
+		AddQuery("limit", "1").
+		Expect(t).
+		Status(200).
+		Type("json").
+		JSONSchema(schema).
+		Done()
+}
+
+func TestGetPhotosLastKey(t *testing.T) {
+	opts := schemas.Placeholders{
+		RootFields: []string{"lastKey"},
+		MinItems:   "1",
+		MaxItems:   "100",
 	}
 	schema, err := schemas.Schema("query-output", opts)
 	testUtils.Ok(t, err)

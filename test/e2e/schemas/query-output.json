@@ -28,14 +28,12 @@
                         "type": "string"
                     }
                 },
-                "required": ["{{requiredFields}}"]
+                "required": ["{{itemFields}}"]
             }
         },
         "lastKey": {
             "type": "string"
         }
     },
-    "required": [
-        "items"
-    ]
+    "required": ["{{rootFields}}"]
 }

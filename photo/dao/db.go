@@ -11,8 +11,8 @@ import (
 // DBProvider provider to DB
 type DBProvider interface {
 	PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error)
-	// GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
 	Query(query *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
+	DeleteItem(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error)
 }
 
 // New Creates a DAO
@@ -67,7 +67,7 @@ func (dao *DAO) Get(input GetInput) (*Photo, error) {
 	}
 	output, err := dao.query(queryInput)
 
-	if len(output.Items) == 1 {
+	if len(output.Items) > 0 {
 		return &output.Items[0], nil
 	}
 	return nil, nil
@@ -80,4 +80,14 @@ func (dao *DAO) query(queryInput *dynamodb.QueryInput) (*QueryOutput, error) {
 		return nil, err
 	}
 	return queryOutput(output)
+}
+
+// Delete a photo
+func (dao *DAO) Delete(input DeleteInput) error {
+	deleteInput, err := input.dbDeleteInput()
+	if err != nil {
+		return err
+	}
+	_, err = dao.db.DeleteItem(deleteInput)
+	return err
 }

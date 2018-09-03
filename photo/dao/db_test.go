@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -57,6 +58,22 @@ func (db *MockDB) Query(query *dynamodb.QueryInput) (*dynamodb.QueryOutput, erro
 	}, nil
 }
 
+func (db *MockDB) DeleteItem(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+	var inPhoto Photo
+	for i, ph := range photos {
+		err := dynamodbattribute.UnmarshalMap(input.Key, &inPhoto)
+		if err != nil {
+			return nil, err
+		}
+		if ph.AlbumID == inPhoto.AlbumID && ph.ID == inPhoto.ID {
+			photos = append(photos[:i], photos[i+1:]...)
+			fmt.Println("---", len(photos))
+			break
+		}
+	}
+	return new(dynamodb.DeleteItemOutput), nil
+}
+
 func TestCreate(t *testing.T) {
 	input := CreateInput{
 		BasicPhoto: BasicPhoto{
@@ -89,31 +106,21 @@ func TestListPhoto(t *testing.T) {
 	test.Equals(t, photos, actual.Items)
 }
 func TestGetPhoto(t *testing.T) {
-	query := QueryInput{
-		Filter: FilterInput{AlbumID: "1"},
-	}
-	actual, err := dao.List(query)
-	test.Ok(t, err)
 	input := GetInput{
-		AlbumID: actual.Items[0].AlbumID,
-		ID:      actual.Items[0].ID,
+		AlbumID: "1",
+		ID:      "111",
 	}
 	photo, err := dao.Get(input)
 	test.Ok(t, err)
+	test.Assert(t, photo != nil, "Expected a photo")
 	test.Equals(t, input.ID, photo.ID)
 }
 
-func TestUpdateDescriptionPhoto(t *testing.T) {
-	photo := BasicPhoto{
-		KeyPhoto: KeyPhoto{
-			AlbumID: photos[0].AlbumID,
-			Date:    photos[0].Date,
-		},
-		Tags:        photos[0].Tags,
-		Description: "New Description",
+func TestDeletePhoto(t *testing.T) {
+	input := DeleteInput{
+		AlbumID: "1",
+		ID:      "111",
 	}
-	photo, err := dao.Update(photo)
+	err := dao.Delete(input)
 	test.Ok(t, err)
-	expected := input.photo(photo.ID, photos[0].URL)
-	test.Equals(t, expected, photo)
 }
