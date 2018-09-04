@@ -71,6 +71,10 @@ func (ctrl *control) Get(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if photo == nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
 	sendJSON(w, photo)
 }
 

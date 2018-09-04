@@ -11,9 +11,6 @@ import (
 	baloo "gopkg.in/h2non/baloo.v3"
 )
 
-var test *baloo.Client
-var photos []dao.Photo
-
 func encodeKey(ph dao.Photo) string {
 	key := dao.KeyPhoto{
 		AlbumID: ph.AlbumID,
@@ -28,31 +25,12 @@ func getPhotos(t *testing.T) {
 	readFeed("photos", &photos)
 	test = baloo.New(apiURL())
 
-	t.Run("projection", projection)
 	t.Run("limit", limit)
+	t.Run("projection", projection)
 	t.Run("lastKey", lastKey)
 	t.Run("startKey", startKey)
 	t.Run("sort", sort)
 
-	// Tear-down
-}
-
-func projection(t *testing.T) {
-	opts := schemas.Placeholders{
-		ItemFields: []string{"description", "tags", "id"},
-		MinItems:   "1",
-		MaxItems:   "100",
-	}
-	schema, err := schemas.Schema("query-output", opts)
-	testUtils.Ok(t, err)
-	test.Get("/").
-		AddQuery("fields", "description").
-		AddQuery("fields", "tags").
-		Expect(t).
-		Status(200).
-		Type("json").
-		JSONSchema(schema).
-		Done()
 }
 
 func limit(t *testing.T) {
@@ -70,6 +48,39 @@ func limit(t *testing.T) {
 
 	test.Get("/").
 		AddQuery("limit", "1").
+		Expect(t).
+		Status(200).
+		Type("json").
+		JSONSchema(schema).
+		JSON(data).
+		Done()
+}
+
+func projection(t *testing.T) {
+	opts := schemas.Placeholders{
+		ItemFields: []string{"description", "tags", "id"},
+		MinItems:   "1",
+		MaxItems:   "100",
+	}
+	schema, err := schemas.Schema("query-output", opts)
+	testUtils.Ok(t, err)
+
+	ph := dao.Photo{
+		BasicPhoto: dao.BasicPhoto{
+			Description: photos[0].Description,
+			Tags:        photos[0].Tags,
+		},
+		ID: photos[0].ID,
+	}
+
+	data := dao.QueryOutput{
+		Items:   []dao.Photo{ph},
+		LastKey: encodeKey(photos[0]),
+	}
+	test.Get("/").
+		AddQuery("limit", "1").
+		AddQuery("fields", "description").
+		AddQuery("fields", "tags").
 		Expect(t).
 		Status(200).
 		Type("json").

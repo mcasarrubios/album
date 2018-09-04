@@ -7,10 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mcasarrubios/album/photo/dao"
 	baloo "gopkg.in/h2non/baloo.v3"
 )
 
-var start = flag.String("start", "no", "inidicates if the app should be started")
+var start = flag.String("start", "no", "inidicates if the app should be started (yes/no)")
+var test *baloo.Client
+var photos []dao.Photo
 
 func TestApp(t *testing.T) {
 	setup()
@@ -25,6 +28,7 @@ func TestApp(t *testing.T) {
 
 func runTests(t *testing.T) {
 	t.Run("getPhotos", getPhotos)
+	t.Run("getPhoto", getPhoto)
 }
 
 func startApp() *exec.Cmd {
