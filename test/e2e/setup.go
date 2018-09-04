@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -21,28 +19,19 @@ type dbSetup struct {
 	conf *config.Config
 }
 
+func apiURL() string {
+	return config.GetConfig().APIURL
+}
+
 func setup() {
 	setEnv()
-	err := startApp()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 	setupDB(config.GetConfig())
-	time.Sleep(300 * time.Millisecond)
 }
 
 func setEnv() {
 	os.Setenv("UP_STAGE", "test")
 	os.Setenv("AWS_ACCESS_KEY_ID", "TEST-KEY")
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "TEST-SECRET")
-}
-
-func startApp() error {
-	cmd := exec.Command("up", "start")
-	cmd.Dir = "../.."
-	cmd.Env = append(os.Environ(), "UP_TEST=true")
-	return cmd.Start()
 }
 
 func setupDB(conf *config.Config) {

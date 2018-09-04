@@ -24,6 +24,7 @@ func New(db DBProvider) DataAccessor {
 
 // OpenDB opens a session in the DB
 func OpenDB() (*dynamodb.DynamoDB, error) {
+
 	sess, err := session.NewSession(getConfig())
 	if err != nil {
 		return nil, err

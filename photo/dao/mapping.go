@@ -64,12 +64,18 @@ func (in QueryInput) dbQueryInput() (*dynamodb.QueryInput, error) {
 		return nil, err
 	}
 
+	forward := true
+	if in.SortDesc {
+		forward = false
+	}
+
 	query := &dynamodb.QueryInput{
 		KeyConditionExpression:    exprBuild.KeyCondition(),
 		FilterExpression:          exprBuild.Filter(),
 		ProjectionExpression:      exprBuild.Projection(),
 		ExpressionAttributeNames:  exprBuild.Names(),
 		ExpressionAttributeValues: exprBuild.Values(),
+		ScanIndexForward:          aws.Bool(forward),
 		TableName:                 aws.String(photoTable()),
 	}
 

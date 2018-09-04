@@ -77,6 +77,7 @@ func (ctrl *control) Get(w http.ResponseWriter, r *http.Request, ps httprouter.P
 // List photos
 func (ctrl *control) List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	qParams := r.URL.Query()
+	sortDesc, err := strconv.ParseBool(qParams.Get("sortDesc"))
 	filter := DAO.FilterInput{
 		AlbumID:     albumID,
 		Tags:        qParams["tags"],
@@ -88,8 +89,9 @@ func (ctrl *control) List(w http.ResponseWriter, r *http.Request, _ httprouter.P
 		Filter:   filter,
 		Fields:   qParams["fields"],
 		StartKey: qParams.Get("startKey"),
+		SortDesc: sortDesc,
 	}
-	err := setLimit(qParams.Get("limit"), &query)
+	err = setLimit(qParams.Get("limit"), &query)
 	if err != nil {
 		http.Error(w, "Invalid fields", http.StatusBadRequest)
 		return

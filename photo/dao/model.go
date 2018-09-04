@@ -57,6 +57,7 @@ type FilterInput struct {
 type QueryInput struct {
 	Filter   FilterInput `json:"filter"`
 	Fields   []string    `json:"fields"`
+	SortDesc bool        `json:"sortDesc"`
 	Limit    int         `json:"limit"`
 	StartKey string      `json:"startKey"`
 }
