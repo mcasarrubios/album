@@ -3,17 +3,22 @@ package e2e
 import (
 	"testing"
 
+	"github.com/mcasarrubios/album/config"
 	testUtils "github.com/mcasarrubios/album/test"
 	"github.com/mcasarrubios/album/test/e2e/schemas"
-	"gopkg.in/h2non/baloo.v3"
+	baloo "gopkg.in/h2non/baloo.v3"
 )
+
+var test *baloo.Client
 
 func init() {
 	setup()
+	test = baloo.New(apiURL())
 }
 
-// test stores the HTTP testing client preconfigured
-var test = baloo.New(apiURL())
+func apiURL() string {
+	return config.GetConfig().APIURL
+}
 
 func TestGetPhotosProjection(t *testing.T) {
 	opts := schemas.Placeholders{

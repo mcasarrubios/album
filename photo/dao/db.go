@@ -3,8 +3,10 @@ package dao
 import (
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/mcasarrubios/album/config"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -22,11 +24,19 @@ func New(db DBProvider) DataAccessor {
 
 // OpenDB opens a session in the DB
 func OpenDB() (*dynamodb.DynamoDB, error) {
-	sess, err := session.NewSession(getConfig().session)
+	sess, err := session.NewSession(getConfig())
 	if err != nil {
 		return nil, err
 	}
 	return dynamodb.New(sess), nil
+}
+
+func getConfig() *aws.Config {
+	awsConfig := config.GetConfig().AWS
+	return &aws.Config{
+		Endpoint: aws.String(awsConfig.Endpoint),
+		Region:   aws.String(awsConfig.Region),
+	}
 }
 
 // Create a photo

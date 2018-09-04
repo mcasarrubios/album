@@ -1,0 +1,11 @@
+{
+    "apiUrl": "http://localhost:3000",
+    "db": {
+        "photoTable": "Photo",
+        "albumTable": "Album"
+    },
+    "aws": {
+        "endpoint": "http://localhost:8000",
+        "region": "eu-west-3"
+    }
+}

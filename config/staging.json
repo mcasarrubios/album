@@ -1,0 +1,10 @@
+{
+    "apiUrl": "https://ir3csz1eka.execute-api.eu-west-3.amazonaws.com/staging",
+    "db": {
+        "photoTable": "Photo",
+        "albumTable": "Album"
+    },
+    "aws": {
+        "region": "eu-west-3"
+    }
+}

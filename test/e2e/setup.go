@@ -1,18 +1,24 @@
 package e2e
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/mcasarrubios/album/common"
+	"github.com/mcasarrubios/album/config"
 	"github.com/mcasarrubios/album/photo/dao"
 )
 
-func apiURL() string {
-	return "http://localhost:3000"
+type dbSetup struct {
+	srv  *dynamodb.DynamoDB
+	conf *config.Config
 }
 
 func setup() {
@@ -22,7 +28,7 @@ func setup() {
 		fmt.Println(err)
 		return
 	}
-	setupDB()
+	setupDB(config.GetConfig())
 	time.Sleep(300 * time.Millisecond)
 }
 
@@ -35,34 +41,40 @@ func setEnv() {
 func startApp() error {
 	cmd := exec.Command("up", "start")
 	cmd.Dir = "../.."
+	cmd.Env = append(os.Environ(), "UP_TEST=true")
 	return cmd.Start()
 }
 
-func setupDB() {
-	db, _ := dao.OpenDB()
-	deleteTables(db)
-	createTables(db)
+func setupDB(conf *config.Config) {
+	database, _ := dao.OpenDB()
+	db := &dbSetup{
+		srv:  database,
+		conf: conf,
+	}
+
+	db.deleteTables()
+	db.createTables()
+	db.feedTables()
 }
 
-func createTables(db *dynamodb.DynamoDB) {
-	_, err := createTable(db, "Album-test", "albumId", "created")
-	_, err = createTable(db, "Photo-test", "albumId", "date")
+func (db *dbSetup) createTables() {
+	_, err := db.createTable(db.conf.DB.AlbumTable, "albumId", "created")
+	_, err = db.createTable(db.conf.DB.PhotoTable, "albumId", "date")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (db *dbSetup) deleteTables() {
+	_, err := db.deleteTable(db.conf.DB.AlbumTable)
+	_, err = db.deleteTable(db.conf.DB.PhotoTable)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
-func deleteTables(db *dynamodb.DynamoDB) {
-	_, err := deleteTable(db, "Album-test")
-	_, err = deleteTable(db, "Photo-test")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
-func createTable(db *dynamodb.DynamoDB, name string, hash string, sort string) (*dynamodb.CreateTableOutput, error) {
+func (db *dbSetup) createTable(name string, hash string, sort string) (*dynamodb.CreateTableOutput, error) {
 	input := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
@@ -91,10 +103,49 @@ func createTable(db *dynamodb.DynamoDB, name string, hash string, sort string) (
 		TableName: aws.String(name),
 	}
 
-	return db.CreateTable(input)
+	return db.srv.CreateTable(input)
 
 }
 
-func deleteTable(db *dynamodb.DynamoDB, name string) (*dynamodb.DeleteTableOutput, error) {
-	return db.DeleteTable(&dynamodb.DeleteTableInput{TableName: &name})
+func (db *dbSetup) deleteTable(name string) (*dynamodb.DeleteTableOutput, error) {
+	return db.srv.DeleteTable(&dynamodb.DeleteTableInput{TableName: &name})
+}
+
+func (db *dbSetup) feedTables() {
+	photos := []dao.Photo{}
+	readFeed("photos", &photos)
+	db.createPhotos(photos)
+}
+
+func readFeed(fileName string, v interface{}) {
+	absPath, _ := filepath.Abs("./data/" + fileName + ".json")
+	byteValue, err := common.ReadFile(absPath)
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal(byteValue, &v)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (db *dbSetup) createPhotos(photos []dao.Photo) {
+	for _, ph := range photos {
+		db.createPhoto(ph)
+	}
+}
+
+func (db *dbSetup) createPhoto(ph dao.Photo) {
+	item, err := dynamodbattribute.MarshalMap(ph)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = db.srv.PutItem(&dynamodb.PutItemInput{
+		TableName: aws.String(db.conf.DB.PhotoTable),
+		Item:      item,
+	})
+	if err != nil {
+		panic(err)
+	}
 }

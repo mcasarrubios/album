@@ -11,7 +11,16 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/mcasarrubios/album/common"
+	"github.com/mcasarrubios/album/config"
 )
+
+func albumTable() string {
+	return config.GetConfig().DB.AlbumTable
+}
+
+func photoTable() string {
+	return config.GetConfig().DB.PhotoTable
+}
 
 func (in CreateInput) photo(id string, URL string) *Photo {
 	p := new(Photo)
@@ -30,7 +39,7 @@ func (ph *Photo) dbPutItemInput() (*dynamodb.PutItemInput, error) {
 		return nil, err
 	}
 	return &dynamodb.PutItemInput{
-		TableName: aws.String("Photo"),
+		TableName: aws.String(photoTable()),
 		Item:      item,
 	}, nil
 }
@@ -61,7 +70,7 @@ func (in QueryInput) dbQueryInput() (*dynamodb.QueryInput, error) {
 		ProjectionExpression:      exprBuild.Projection(),
 		ExpressionAttributeNames:  exprBuild.Names(),
 		ExpressionAttributeValues: exprBuild.Values(),
-		TableName:                 aws.String("Photo"),
+		TableName:                 aws.String(photoTable()),
 	}
 
 	if in.Limit > 0 {
@@ -103,7 +112,7 @@ func (in GetInput) dbQueryInput() (*dynamodb.QueryInput, error) {
 		ProjectionExpression:      exprBuild.Projection(),
 		ExpressionAttributeNames:  exprBuild.Names(),
 		ExpressionAttributeValues: exprBuild.Values(),
-		TableName:                 aws.String("Photo"),
+		TableName:                 aws.String(photoTable()),
 	}, nil
 }
 
@@ -207,6 +216,6 @@ func (in DeleteInput) dbDeleteInput() (*dynamodb.DeleteItemInput, error) {
 				S: aws.String(in.ID),
 			},
 		},
-		TableName: aws.String("Photo"),
+		TableName: aws.String(photoTable()),
 	}, nil
 }

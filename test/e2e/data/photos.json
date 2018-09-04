@@ -1,0 +1,35 @@
+[
+    {
+        "url": "http://my-photo.jpg",
+        "id": "111",
+        "albumId": "1",
+        "date": "2008-09-15T15:53:00+05:00",
+        "tags": [
+            "tag-111-A",
+            "tag-111-B"
+        ],
+        "description": "Awesome description 1"
+    },
+    {
+        "url": "http://my-photo-2.jpg",
+        "id": "222",
+        "albumId": "1",
+        "date": "2008-09-25T15:53:00+05:00",
+        "tags": [
+            "tag-222-A",
+            "tag-222-B"
+        ],
+        "description": "Awesome description 2"
+    },
+    {
+        "url": "http://my-photo-3.jpg",
+        "id": "333",
+        "albumId": "2",
+        "date": "2008-10-15T15:53:00+05:00",
+        "tags": [
+            "tag-333-A",
+            "tag-333-B"
+        ],
+        "description": "Awesome description 3"
+    }
+]
