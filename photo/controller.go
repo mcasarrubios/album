@@ -7,11 +7,12 @@ import (
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
-	DAO "github.com/mcasarrubios/album/photo/dao"
+	"github.com/mcasarrubios/album/photo/adapters"
+	"github.com/mcasarrubios/album/photo/entities"
 )
 
 type control struct {
-	dao DAO.DataAccessor
+	dao entities.DataAccessor
 }
 
 // HTTPController of photo resource
@@ -25,8 +26,8 @@ const albumID = "1"
 
 // NewController creates a photo controller
 func NewController() (HTTPController, error) {
-	db, err := DAO.OpenDB()
-	dao := DAO.New(db)
+	db, err := adapters.OpenDB()
+	dao := adapters.NewDB(db)
 	return &control{dao: dao}, err
 }
 

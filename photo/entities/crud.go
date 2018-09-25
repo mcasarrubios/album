@@ -1,24 +1,4 @@
-package dao
-
-// KeyPhoto key index fields
-type KeyPhoto struct {
-	AlbumID string `json:"albumId,omitempty"`
-	Date    string `json:"date,omitempty"`
-}
-
-// BasicPhoto info of a photo photo
-type BasicPhoto struct {
-	KeyPhoto
-	Tags        []string `json:"tags,omitempty"`
-	Description string   `json:"description,omitempty"`
-}
-
-// Photo model
-type Photo struct {
-	BasicPhoto
-	ID  string `json:"id,omitempty"`
-	URL string `json:"url,omitempty"`
-}
+package entities
 
 // CreateInput data to create a photo
 type CreateInput struct {
@@ -68,15 +48,24 @@ type QueryOutput struct {
 	LastKey string  `json:"lastKey,omitempty"`
 }
 
-// DAO access to DB
-type DAO struct {
-	db DBProvider
-}
-
 // DataAccessor accesor to DB
 type DataAccessor interface {
-	Create(input CreateInput, URL string) (*Photo, error)
-	Get(input GetInput) (*Photo, error)
-	List(query QueryInput) (*QueryOutput, error)
-	Delete(input DeleteInput) error
+	Create(input CreateInput) (*Photo, error)
+	// Get(input GetInput) (*Photo, error)
+	// List(query QueryInput) (*QueryOutput, error)
+	// Delete(input DeleteInput) error
+}
+
+// Validate the creation of a photo
+func (input CreateInput) Validate() error {
+	if input.AlbumID == "" {
+		return error("albumId is missing")
+	}
+	if input.Date == "" {
+		return error("date is missing")
+	}
+	if input.URL == "" {
+		return error("URL is missing")
+	}
+	return nil
 }

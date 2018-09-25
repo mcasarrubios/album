@@ -1,4 +1,4 @@
-package dao
+package adapters
 
 import (
 	"encoding/base64"

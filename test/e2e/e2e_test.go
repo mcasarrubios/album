@@ -11,13 +11,13 @@ import (
 	baloo "gopkg.in/h2non/baloo.v3"
 )
 
-var start = flag.String("start", "no", "inidicates if the app should be started (yes/no)")
+var start = *flag.String("start", "no", "inidicates if the app should be started (yes/no)")
 var test *baloo.Client
 var photos []dao.Photo
 
 func TestApp(t *testing.T) {
 	setup()
-	if *start == "yes" {
+	if start == "yes" {
 		cmd := startApp()
 		runTests(t)
 		endApp(cmd)
